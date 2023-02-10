@@ -24,15 +24,17 @@ class VideoThumbnail {
   /// If the thumbnailPath is ommited or null, a thumbnail image file will be created under the same folder as the video file.
   /// Specify the maximum height or width for the thumbnail or 0 for same resolution as the original video.
   /// The lower quality value creates lower quality of the thumbnail image, but it gets ignored for PNG format.
-  static Future<String?> thumbnailFile(
-      {required String video,
-      Map<String, String>? headers,
-      String? thumbnailPath,
-      ImageFormat imageFormat = ImageFormat.PNG,
-      int maxHeight = 0,
-      int maxWidth = 0,
-      int timeMs = 0,
-      int quality = 10}) async {
+  static Future<String?> thumbnailFile({
+    required String video,
+    Map<String, String>? headers,
+    String? thumbnailPath,
+    ImageFormat imageFormat = ImageFormat.PNG,
+    int maxHeight = 0,
+    int maxWidth = 0,
+    int timeMs = 0,
+    int quality = 10,
+    bool keyFramesOnly = false,
+  }) async {
     assert(video.isNotEmpty);
     if (video.isEmpty) return null;
     final reqMap = <String, dynamic>{
@@ -43,7 +45,8 @@ class VideoThumbnail {
       'maxh': maxHeight,
       'maxw': maxWidth,
       'timeMs': timeMs,
-      'quality': quality
+      'quality': quality,
+      'keyFramesOnly': keyFramesOnly,
     };
     return await _channel.invokeMethod('file', reqMap);
   }
@@ -60,6 +63,7 @@ class VideoThumbnail {
     int maxWidth = 0,
     int timeMs = 0,
     int quality = 10,
+    bool keyFramesOnly = false,
   }) async {
     assert(video.isNotEmpty);
     final reqMap = <String, dynamic>{
@@ -70,7 +74,36 @@ class VideoThumbnail {
       'maxw': maxWidth,
       'timeMs': timeMs,
       'quality': quality,
+      'keyFramesOnly': keyFramesOnly,
     };
     return await _channel.invokeMethod('data', reqMap);
+  }
+
+  static Future<List<String>> thumbnailFiles(
+      {required String video,
+      Map<String, String>? headers,
+      String? thumbnailsDirectoryPath,
+      ImageFormat imageFormat = ImageFormat.PNG,
+      int maxHeight = 0,
+      int maxWidth = 0,
+      List<int> frameTimesMs = const [],
+      bool keyFramesOnly = false,
+      int quality = 10}) async {
+    assert(video.isNotEmpty);
+    if (video.isEmpty) return [];
+    final reqMap = <String, dynamic>{
+      'video': video,
+      'headers': headers,
+      'directoryPath': thumbnailsDirectoryPath,
+      'format': imageFormat.index,
+      'maxh': maxHeight,
+      'maxw': maxWidth,
+      'frameTimesMs': frameTimesMs,
+      'quality': quality,
+      'keyFramesOnly': keyFramesOnly,
+    };
+
+    final list = await _channel.invokeMethod('files', reqMap);
+    return list.cast<String>();
   }
 }
